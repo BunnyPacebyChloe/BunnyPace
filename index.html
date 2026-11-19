@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bunny Pace</title>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#15181e">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Bunny Pace">
+<link rel="apple-touch-icon" href="icon-180.png"><link rel="icon" href="icon-192.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--yl:#fff35c;--yt:#1d1d1b;--bg:#f7f6f3;--card:#fff;--tx:#1d1d1b;--mut:#6b6a66;--bd:#e3e1db;--ac:#15181e;--acx:#fff;--rd:#c0392b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--yl:#5c5416;--yt:#fff6b0;--bg:#171716;--card:#222220;--tx:#eeeeea;--mut:#9b9a94;--bd:#363633;--ac:#e9ecf1;--acx:#14181f;--rd:#ef7b6e}}
+:root[data-theme="dark"]{--yl:#5c5416;--yt:#fff6b0;--bg:#171716;--card:#222220;--tx:#eeeeea;--mut:#9b9a94;--bd:#363633;--ac:#e9ecf1;--acx:#14181f;--rd:#ef7b6e}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:860px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:22px;margin:0 0 2px}h2{font-size:16px;margin:0 0 10px}
+.sub{color:var(--mut);margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:16px}
+button,input,select{font:inherit;color:inherit}
+button{border:1px solid var(--bd);background:var(--card);border-radius:8px;padding:7px 12px;cursor:pointer}
+button.p{background:var(--ac);color:var(--acx);border-color:var(--ac);font-weight:600}
+button.r{background:var(--rd);color:#fff;border-color:var(--rd);font-weight:600}
+button.g{border:none;color:var(--mut);padding:4px 8px}
+select,input[type=text],input[type=number]{border:1px solid var(--bd);background:var(--bg);border-radius:8px;padding:7px 10px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mh{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--yl);color:var(--yt);padding:12px 16px;border-radius:12px 12px 0 0;font-weight:700}
+.mt1{font-size:18px}.mr{font-size:15px}.mb{padding:8px 16px 4px}.card.mc{padding:0;margin-bottom:16px}.mc .task{padding:12px 16px}.mc .task.run{margin:0;border-radius:0}.tot{border-radius:12px;margin-bottom:16px}
+.nm{position:relative;cursor:help;display:inline-block}
+.nm[data-scope]:hover::after,.nm[data-scope]:focus::after{content:attr(data-scope);position:absolute;left:0;top:100%;margin-top:4px;z-index:9;width:min(420px,80vw);white-space:normal;background:var(--tx);color:var(--bg);font-weight:400;font-size:13px;line-height:1.4;padding:8px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.stamp{margin-left:10px;color:var(--mut);font-size:13px;font-variant-numeric:tabular-nums}.task{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--bd)}
+.task:first-of-type{border-top:none}
+.task.run{background:color-mix(in srgb,var(--ac) 10%,transparent);margin:0 -10px;padding:10px;border-radius:8px}
+.nm{font-weight:600}.mt{color:var(--mut);font-size:13px}
+.tm{font-variant-numeric:tabular-nums;font-weight:600;text-align:right;min-width:70px}
+.sc{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--bd);white-space:nowrap}
+th{color:var(--mut);font-weight:600}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.over{color:var(--rd)}.empty{color:var(--mut);padding:8px 0}
+.tabs{display:flex;gap:6px;margin-bottom:14px}.tabs button.on{background:var(--ac);color:var(--acx);border-color:var(--ac)}
+.sub2 td:first-child{padding-left:24px}.ms td{font-weight:700;background:color-mix(in srgb,var(--ac) 8%,transparent)}.brand{display:flex;align-items:center;gap:12px;margin-bottom:18px}.brand .sub{margin:0}.brand h1{margin:0;letter-spacing:-.02em}
+.badge{width:50px;height:50px;border-radius:14px;background:#fff;border:1px solid var(--bd);display:grid;place-items:center;flex:none;overflow:hidden}.badge img{width:44px;height:44px;display:block}
+.chip{margin-left:auto;font-size:12px;color:var(--mut);border:1px solid var(--bd);border-radius:99px;padding:3px 10px;white-space:nowrap}
+.live{display:inline-block;width:9px;height:9px;border-radius:50%;background:#2dd4a7;margin-left:8px;animation:pl 1.6s infinite}@keyframes pl{50%{opacity:.25}}
+.hide{display:none}
+</style></head>
+<body><main>
+<header class="brand"><div class="badge"><img alt="Bunny Pace logo" src="data:image/png;base64,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"></div>
+<div><h1>Bunny Pace<span id="live" class="live hide"></span></h1><p class="sub">Track every task at your own pace.</p></div><span id="sync" class="chip">Starting…</span></header>
+<div class="tabs"><button id="t0" class="on">Projects</button><button id="t1">Track</button><button id="t2">Report</button></div>
+<div id="runb" class="card hide"></div>
+<section id="v0">
+  <div class="card"><h2>Start a new project record</h2><div class="row"><input type="text" id="pn" placeholder="Project name, e.g. Coast Fuel – Foundation" style="flex:1;min-width:200px"><button class="p" id="newp">Create</button></div>
+  <p class="mt">Each project has its own tasks, timesheet and report. Nothing is shared between projects.</p></div>
+  <div class="card"><h2>Continue a project</h2><div id="plist"></div></div>
+  <div class="card"><h2>Google Drive sync</h2><p class="mt">Saves your projects in a file called BunnyPace-data.json in your own Google Drive, so Mac and iPhone stay in sync. The app can only see files it creates itself.</p>
+  <input type="text" id="gid" placeholder="Google Client ID (ends with apps.googleusercontent.com)" style="width:100%">
+  <div class="row" style="margin-top:8px"><button class="p" id="gcon">Connect Google Drive</button><button id="gdis">Disconnect</button></div><div class="mt" id="gst" style="margin-top:6px"></div></div>
+  <div class="card"><h2>Backup</h2><p class="mt">Data is saved on this device. Export a backup to keep a copy or move it between Mac and iPhone, then restore it on the other device (it merges, nothing is overwritten).</p>
+  <div class="row"><button id="bk">Export backup</button><button id="rsb">Restore backup</button><input type="file" id="rs" accept=".json" style="display:none"></div><div class="mt" id="bkm"></div></div>
+</section>
+
+<section id="v1" class="hide"><h2 id="pn1" style="font-size:19px"></h2>
+  <div class="card">
+    <h2>1. Load your estimate file</h2>
+    <input type="file" id="file" accept=".xlsx,.xls,.csv">
+    <p class="mt">Upload your estimate as an Excel or CSV file. Bunny Pace picks out the milestones (with their hour ranges) and only the lettered tasks (a., b., c.), then shows you the result to confirm before loading. Recorded sessions of tasks with the same name are kept. This only affects the project you have open.</p><div class="mt" id="imp"></div><div id="prev"></div>
+    <details><summary class="mt" style="cursor:pointer">Or add manually</summary>
+    <div class="row" style="margin:8px 0"><input type="text" id="mn" placeholder="Milestone" style="flex:1;min-width:140px"><input type="number" id="m1" placeholder="Min h" style="width:80px"><input type="number" id="m2" placeholder="Max h" style="width:80px"><button id="addm">Add milestone</button></div>
+    <div class="row"><select id="ms"></select><input type="text" id="nn" placeholder="Task name" style="flex:1;min-width:140px"><button id="add">Add task</button></div></details>
+  </div>
+  <div id="list"></div>
+</section>
+
+<section id="v2" class="hide">
+  <div class="card">
+    <div class="row" style="justify-content:space-between"><h2 style="margin:0" id="rt">Project report</h2>
+      <button class="p" id="exp">Download Excel report</button></div>
+    <p class="mt" id="gen"></p><p class="mt">Times are tracked to the second; totals are summed from exact seconds and rounded only for display.</p>
+    <div class="sc"><table id="sum"></table></div>
+  </div>
+  <div class="card">
+    <h2>Appendix: every work session</h2>
+    <div class="sc"><table id="app"></table></div>
+  </div>
+  <div class="row"><button id="reset">Clear this project’s sessions</button></div>
+</section>
+</main>
+<script>
+const KEY="tracker-v2";
+const uid=()=>Math.random().toString(36).slice(2,9);
+const blank=n=>({id:uid(),name:n,ms:[],tasks:[],sessions:[],running:null,created:Date.now()});
+function norm(o){if(!o||typeof o!=="object")o={};
+  if(!Array.isArray(o.projects)){const has=(o.ms&&o.ms.length)||(o.tasks&&o.tasks.length);
+    const p=Object.assign(blank(has&&(o.tasks||[]).some(t=>/Localisation the materials/.test(t.name))?"Coast Fuel":"My project"),{ms:o.ms||[],tasks:o.tasks||[],sessions:o.sessions||[],running:o.running||null});
+    o={projects:has?[p]:[],cur:null,at:o.at||0}}
+  o.projects.forEach(p=>{p.ms=p.ms||[];p.tasks=p.tasks||[];p.sessions=p.sessions||[];if(p.running===undefined)p.running=null;
+    if(p.tasks.some(t=>!t.mid)){let g=p.ms.find(m=>m.name==="Ungrouped");if(!g){g={id:uid(),name:"Ungrouped",min:null,max:null};p.ms.push(g)}p.tasks.forEach(t=>{if(!t.mid)t.mid=g.id})}});
+  if(!o.projects.some(p=>p.id===o.cur))o.cur=null;return o}
+let R=norm((()=>{try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}})());
+let S=R.projects.find(p=>p.id===R.cur)||blank("");
+let ref=null,pushT=null,armed=null,armR=false;
+const chip=t=>{const e=document.getElementById("sync");if(e)e.textContent=t};
+const store=()=>{try{localStorage.setItem(KEY,JSON.stringify(R))}catch(e){}};
+const push=()=>{if(!ref)return;clearTimeout(pushT);pushT=setTimeout(()=>{ref.set({json:JSON.stringify(R),at:R.at}).then(()=>chip("Synced ✓")).catch(()=>chip("Sync error"))},500)};
+const save=()=>{R.at=Date.now();if(R.projects.includes(S))S.at=R.at;store();driveSoon()};
+const saveFile=(name,blob)=>{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)};
+const anyRun=()=>R.projects.some(p=>p.running);
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,"0");
+const dStr=t=>{const d=new Date(t);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
+const tStr=t=>{const d=new Date(t);return pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds())};
+const hms=ms=>{const s=Math.floor(ms/1000);return pad(Math.floor(s/3600))+":"+pad(Math.floor(s%3600/60))+":"+pad(s%60)};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const taskMin=id=>S.sessions.filter(s=>s.taskId===id).reduce((a,s)=>a+(s.end-s.start),0)/60000;
+const msTasks=m=>S.tasks.filter(t=>t.mid===m.id);
+const msMin=m=>msTasks(m).reduce((a,t)=>a+taskMin(t.id),0);
+const est=m=>m.max==null?"–":(m.min===m.max?m.min:m.min+"–"+m.max)+" h";
+const status=(m,min)=>{if(m.max==null)return"–";const h=min/60;
+  if(h<m.min)return"Under by "+(m.min-h).toFixed(1)+" h";if(h>m.max)return"Over by "+(h-m.max).toFixed(1)+" h";return"Within estimate"};
+const stCls=(m,min)=>m.max!=null&&min/60>m.max?"over":"";
+
+function stopP(p){const r=p.running;if(!r)return;p.running=null;
+  const end=Date.now();if(end-r.start>=1000)p.sessions.push({id:uid(),taskId:r.taskId,start:r.start,end});p.at=Date.now();save();render()}
+function start(id){const o=R.projects.find(p=>p.running);if(o){const r=o.running;o.running=null;const e=Date.now();o.at=e;if(e-r.start>=1000)o.sessions.push({id:uid(),taskId:r.taskId,start:r.start,end:e})}
+  S.running={taskId:id,start:Date.now()};save();render()}
+function stop(){const p=R.projects.find(q=>q.running);if(p)stopP(p)}
+
+const fm=m=>Math.floor(m/60)+"h "+pad(Math.floor(m%60))+"m";
+const liveMs=()=>S.running?Date.now()-S.running.start:0;
+const isRun=t=>S.running&&S.running.taskId===t.id;
+const tTot=t=>taskMin(t.id)+(isRun(t)?liveMs()/60000:0);
+const mTot=m=>msMin(m)+(S.running&&msTasks(m).some(isRun)?liveMs()/60000:0);
+const stamp=t=>{const x=tTot(t);return isRun(t)?"● since "+tStr(S.running.start).slice(0,5)+" · total "+fm(x):(x>0?"Total "+fm(x):"")};
+const sums=()=>({e0:S.ms.reduce((a,m)=>a+(m.min||0),0),e1:S.ms.reduce((a,m)=>a+(m.max||0),0),t:S.ms.reduce((a,m)=>a+mTot(m),0)});
+function upd(){S.tasks.forEach(t=>{const e=document.querySelector(`[data-t="${t.id}"]`);if(e)e.textContent=stamp(t)});
+  S.ms.forEach(m=>{const e=document.querySelector(`[data-mt="${m.id}"]`);if(e)e.textContent=fm(mTot(m))});
+  const e=document.querySelector("[data-tt]");if(e)e.textContent=fm(sums().t)}
+function render(){
+  $("ms").innerHTML=S.ms.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join("");
+  const T=sums();
+  $("pn1").textContent=S.name?"Project: "+S.name:"No project open. Go to Projects to create or continue one.";$("rt").textContent=S.name?"Report – "+S.name:"Project report";
+  const rp=R.projects.find(p=>p.running&&p!==S),rb=$("runb");rb.classList.toggle("hide",!rp);
+  if(rp)rb.innerHTML=`Timer is running in <b>${esc(rp.name)}</b> <button class="r" data-a="stop">Stop timer</button> <button data-a="openp" data-id="${rp.id}">Open</button>`;
+  const lv=$("live");if(lv)lv.classList.toggle("hide",!anyRun());document.title=anyRun()?"● Bunny Pace":"Bunny Pace";
+  $("list").innerHTML=S.ms.length?S.ms.map(m=>{const x=mTot(m);
+    return `<div class="card mc"><div class="mh"><div class="mt1">${esc(m.name)}</div><div class="mr">${est(m)}</div></div><div class="mb mt">Logged: <b data-mt="${m.id}">${fm(x)}</b> · <span class="${stCls(m,x)}">${status(m,x)}</span> <button class="g" data-a="delm" data-id="${m.id}" title="Remove milestone">✕</button></div>`+
+    (msTasks(m).map(t=>`<div class="task ${isRun(t)?"run":""}"><div><span class="nm" tabindex="0"${t.scope?` data-scope="${esc(t.scope)}"`:""}>${t.letter?esc(t.letter)+" ":""}${esc(t.name)}</span><span class="stamp" data-t="${t.id}">${stamp(t)}</span></div>
+      <div class="row"><button class="${isRun(t)?"r":"p"}" data-a="${isRun(t)?"stop":"start"}" data-id="${t.id}">${isRun(t)?"Stop":"Start"}</button><button class="g" data-a="del" data-id="${t.id}" title="Remove task">✕</button></div></div>`).join("")||'<div class="empty" style="padding:8px 16px">No tasks in this milestone.</div>')+"</div>"}).join("")+
+    `<div class="mh tot"><div class="mt1">TOTAL</div><div class="mr">${T.e0}–${T.e1} h · logged <span data-tt>${fm(T.t)}</span></div></div>`:'<div class="card empty">No tasks yet. Load a file or add one above.</div>';
+  renderReport();
+}
+function rows(){const out=[];let TE0=0,TE1=0,TA=0;
+  S.ms.forEach(m=>{const a=msMin(m);TA+=a;TE0+=m.min||0;TE1+=m.max||0;
+    out.push({m:1,name:m.name,min:m.min,max:m.max,n:msTasks(m).reduce((q,t)=>q+S.sessions.filter(s=>s.taskId===t.id).length,0),act:a,st:status(m,a),over:stCls(m,a)});
+    msTasks(m).forEach(t=>out.push({m:0,name:(t.letter?t.letter+" ":"")+t.name,n:S.sessions.filter(s=>s.taskId===t.id).length,act:taskMin(t.id)}))});
+  return {out,TE0,TE1,TA}}
+function renderReport(){
+  const {out,TE0,TE1,TA}=rows();
+  $("gen").textContent="Generated "+dStr(Date.now())+" "+tStr(Date.now())+(S.running?" · a task is still running (not counted until stopped)":"");
+  $("sum").innerHTML="<tr><th>Milestone / task</th><th class=n>Sessions</th><th class=n>Estimate</th><th class=n>Actual (min)</th><th class=n>Actual (h)</th><th>Status</th></tr>"+
+    out.map(r=>`<tr class="${r.m?"ms":"sub2"}"><td>${esc(r.name)}</td><td class=n>${r.n}</td><td class=n>${r.m?est(r):""}</td><td class=n>${r.act.toFixed(1)}</td><td class=n>${(r.act/60).toFixed(1)}</td><td class="${r.over}">${r.m?r.st:""}</td></tr>`).join("")+
+    `<tr><th>Total</th><th></th><th class=n>${TE0}–${TE1} h</th><th class=n>${TA.toFixed(1)}</th><th class=n>${(TA/60).toFixed(1)}</th><th></th></tr>`;
+  const ss=[...S.sessions].sort((a,b)=>a.start-b.start);
+  $("app").innerHTML="<tr><th>#</th><th>Milestone</th><th>Task</th><th>Start date</th><th>Start time</th><th>End date</th><th>End time</th><th class=n>Minutes</th><th>hh:mm:ss</th><th></th></tr>"+
+    (ss.length?ss.map((s,i)=>{const i2=info(s);return `<tr><td>${i+1}</td><td>${esc(i2.m)}</td><td>${esc(i2.t)}</td><td>${dStr(s.start)}</td><td>${tStr(s.start)}</td><td>${dStr(s.end)}</td><td>${tStr(s.end)}</td><td class=n>${((s.end-s.start)/60000).toFixed(2)}</td><td>${hms(s.end-s.start)}</td><td><button class=g data-a="ds" data-id="${s.id}">✕</button></td></tr>`}).join(""):'<tr><td colspan=10 class=empty>No sessions recorded yet.</td></tr>');
+}
+function info(s){const t=S.tasks.find(t=>t.id===s.taskId);if(!t)return{m:"(removed)",t:"(removed task)"};
+  const m=S.ms.find(m=>m.id===t.mid);return{m:m?m.name:"",t:(t.letter?t.letter+" ":"")+t.name}}
+setInterval(()=>{if(S.running)upd()},1000);
+
+document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,id=b.dataset.id;
+  if(a==="openp"){openP(id);return}if(a==="delp"){delP(id);return}
+  if(a==="start")start(id);else if(a==="stop")stop();
+  else if(a==="del"){if(confirm("Remove this task?")){if(S.running&&S.running.taskId===id)S.running=null;S.tasks=S.tasks.filter(t=>t.id!==id);save();render()}}
+  else if(a==="delm"){if(confirm("Remove this milestone and its tasks?")){const ids=S.tasks.filter(t=>t.mid===id).map(t=>t.id);if(S.running&&ids.includes(S.running.taskId))S.running=null;S.tasks=S.tasks.filter(t=>t.mid!==id);S.ms=S.ms.filter(m=>m.id!==id);save();render()}}
+  else if(a==="ds"){S.sessions=S.sessions.filter(s=>s.id!==id);save();render()}});
+
+$("addm").onclick=()=>{const n=$("mn").value.trim();if(!n)return;const a=parseFloat($("m1").value),b=parseFloat($("m2").value);
+  S.ms.push({id:uid(),name:n,min:isNaN(a)?null:a,max:isNaN(b)?(isNaN(a)?null:a):b});$("mn").value=$("m1").value=$("m2").value="";save();render()};
+$("add").onclick=()=>{const n=$("nn").value.trim(),m=$("ms").value;if(!n||!m)return;S.tasks.push({id:uid(),mid:m,letter:"",name:n});$("nn").value="";save();render()};
+
+const PLAN=[
+["Optional Preparation (Recommended): Vietnamese Brand Localisation",8,16,[
+["a.","Localisation the materials","Review Coast Fuel’s existing materials and localise the needed materials for Vietnamese audiences, adapting the wording, tone and examples as needed so Lucy and the team can use them as a reference when creating content."]]],
+["M4: Social Content Strategy",14,21,[
+["b.","Social launch campaign concept","Develop the central creative idea for the launch campaign to guide Lucy’s content."],
+["c.","Content Pillars","Define content pillars for Coastal Fuel for two potential social platforms and provide example post ideas for each pillar."],
+["d.","Six-Month Strategic Content Framework","Develop a 6-month strategic content framework, which set communication objectives and content priorities for the pre-launch, launch and post-launch phases. Lucy can use the framework to build her weekly posts."],
+["e.","Content formats and feed direction","Recommend formats for one agreed priority channel. Provide annotated references showing how the feed could look, why the approach fits Coast Fuel, and what good execution looks like."],
+["f.","KOL/KOC’s direction","Define the creator profiles, style and tone that fit Coast Fuel so Lucy and the talent team can identify suitable creators."]]],
+["M5: Content Guidelines & Rulebook",10,15,[
+["g.","Content guidelines, templates and approvals","Provide a reusable brief and a quality checklist. Set out who plans, reviews, approves and publishes content each week, including when to send product claims to Rosie for approval."],
+["h.","Initial briefing with Lucy","Walk Lucy through the strategy and guidelines, answer her questions and brief her on the first batch of content."],
+["i.","First-batch quality control","Review up to five draft posts and provide one consolidated round of feedback on the copy and visuals."],
+["k.","Project alignment, revisions and handover","Confirm the scope at kickoff, apply one consolidated round of feedback to the strategy and guidelines, and hand over the final materials."]]]];
+function seedPlan(){const ms=[],tasks=[];PLAN.forEach(p=>{const m={name:p[0],min:p[1],max:p[2]};ms.push(m);p[3].forEach(t=>tasks.push({ms:m,letter:t[0],name:t[1],scope:t[2]}))});return{ms,tasks}}
+function applyPlan(ms,tasks){const oldT=S.tasks,oldM=S.ms;
+  ms.forEach(m=>{const o=oldM.find(x=>x.name===m.name);m.id=o?o.id:uid()});
+  S.ms=ms.map(m=>({id:m.id,name:m.name,min:m.min,max:m.max}));
+  S.tasks=tasks.map(t=>{const o=oldT.find(x=>x.mid===t.ms.id&&x.name===t.name);return{id:o?o.id:uid(),mid:t.ms.id,letter:t.letter,name:t.name,scope:t.scope||""}});
+  if(S.running&&!S.tasks.some(t=>t.id===S.running.taskId))S.running=null}
+const RNG=/^(\d+(?:[.,]\d+)?)\s*(?:[-–—]|to)\s*(\d+(?:[.,]\d+)?)$/i, NUM=/^\d+(?:[.,]\d+)?$/, LET=/^\(?[a-z]\)?[.)]?$/i;
+const f=x=>parseFloat(x.replace(",","."));
+function parse(data){const ms=[],tasks=[];let cur=null;
+  data.forEach(r=>{const c=r.map(x=>String(x).trim());const i0=c.findIndex(x=>x);if(i0<0)return;
+    if(/estimated\s*hours/i.test(c.join(" ")))return;
+    const first=c[i0];
+    if(LET.test(first)){const j=c.findIndex((x,i)=>i>i0&&x);if(j<0)return;
+      if(!cur){cur={name:"Ungrouped",min:null,max:null};ms.push(cur)}
+      tasks.push({ms:cur,letter:first.replace(/[()]/g,"").replace(/[.)]?$/,".").toLowerCase(),name:c[j],scope:c.slice(j+1).find(x=>x&&!RNG.test(x)&&!NUM.test(x)&&!x.includes("$"))||""});return}
+    let h=null;for(let i=i0+1;i<c.length;i++){const x=c[i];if(!x||x.includes("$"))continue;
+      let m=x.match(RNG);if(m){h=[f(m[1]),f(m[2])];break}if(NUM.test(x)){h=[f(x),f(x)];break}}
+    if(h){cur={name:first.replace(/\*+$/,"").trim(),min:Math.min(...h),max:Math.max(...h)};ms.push(cur)}});
+  return {ms,tasks}}
+let pending=null;
+const setImp=t=>{$("imp").textContent=t};
+const PROMPT=`You are reading a freelancer's project estimate (a table). Return ONLY JSON, no prose or code fences: {"milestones":[{"name":string,"min":number|null,"max":number|null,"tasks":[{"letter":"a.","name":string,"scope":string}]}]}. A milestone is a highlighted group heading row that has its own estimated hours (8-16 means min 8, max 16; a single number means min=max). Tasks are the lettered rows (a., b., c. ...) under it: name = the short title, scope = the description text. Ignore fee or price columns, hours of individual tasks, header rows and TOTAL rows. Keep the original order and wording.`;
+function toPlan(j){const ms=[],tasks=[];((j&&j.milestones)||[]).forEach(m=>{const nm=String(m.name||"").replace(/\*+$/,"").trim();if(!nm)return;
+  const mn=m.min==null?null:+m.min,mx=m.max==null?mn:+m.max;const mm={name:nm,min:mn,max:mx};ms.push(mm);
+  (m.tasks||[]).forEach(t=>{if(t&&t.name)tasks.push({ms:mm,letter:String(t.letter||"").trim().replace(/[.)]?$/,"."),name:String(t.name).trim(),scope:String(t.scope||"").trim()})})});
+  return{ms,tasks}}
+async function ai(text,imgs){throw{code:"noai"};
+  if(imgs){const l=await sm.limits();if(!l.images)throw{code:"noimg"}}
+  return await sm.json(text,imgs?{images:imgs}:{})}
+function showPreview(p){if(!p.tasks.length){setImp("Couldn’t find any lettered tasks (a., b., c.) in that file.");return}
+  pending=p;setImp("");
+  $("prev").innerHTML='<div class="mt" style="margin:10px 0 4px">Check what was found:</div>'+p.ms.map(m=>`<div style="margin:6px 0"><b>${esc(m.name)}</b> <span class="mt">${est(m)}</span><div class="mt">${p.tasks.filter(t=>t.ms===m).map(t=>esc(t.letter+" "+t.name)).join(" · ")||"no tasks"}</div></div>`).join("")+'<div class="row" style="margin-top:8px"><button class="p" id="useit">Use this list</button><button id="nope">Cancel</button></div>';
+  $("useit").onclick=()=>{applyPlan(pending.ms,pending.tasks);pending=null;$("prev").innerHTML="";save();render();setImp("Loaded.")};
+  $("nope").onclick=()=>{pending=null;$("prev").innerHTML=""}}
+$("file").onchange=async ev=>{const fl=ev.target.files[0];ev.target.value="";if(!fl)return;$("prev").innerHTML="";
+  const ext=(fl.name.split(".").pop()||"").toLowerCase();
+  try{let plan=null;
+    if(["xlsx","xls","csv"].includes(ext)){const wb=XLSX.read(await fl.arrayBuffer(),{type:"array"});const sh=wb.Sheets[wb.SheetNames[0]];
+      plan=parse(XLSX.utils.sheet_to_json(sh,{header:1,defval:""}));
+      if(!plan.tasks.length){setImp("Reading with Claude…");plan=toPlan(await ai(PROMPT+"\n\nDOCUMENT:\n"+XLSX.utils.sheet_to_csv(sh)))}}
+    else if(ext==="docx"){if(typeof mammoth==="undefined")throw{code:"nomammoth"};setImp("Reading document…");
+      const r=await mammoth.extractRawText({arrayBuffer:await fl.arrayBuffer()});plan=toPlan(await ai(PROMPT+"\n\nDOCUMENT:\n"+r.value))}
+    else if(ext==="txt"||ext==="md"){setImp("Reading text…");plan=toPlan(await ai(PROMPT+"\n\nDOCUMENT:\n"+await fl.text()))}
+    else if((fl.type||"").startsWith("image/")){setImp("Reading image…");plan=toPlan(await ai(PROMPT,[fl]))}
+    else{setImp("Unsupported file. Use .xlsx, .csv, .docx, .txt or an image.");return}
+    showPreview(plan)}
+  catch(e){const c=e&&e.code;setImp(c==="not_granted"?"Permission to use Claude was declined.":c==="noai"||c==="noimg"?"Couldn’t find lettered tasks (a., b., c.) in this file. Check the layout, or add tasks manually.":c==="nomammoth"?"Word reader didn’t load. Try again or save as PDF/image.":"Couldn’t read that file. Try a clearer file or another format.")}};
+
+function openP(id){const p=R.projects.find(q=>q.id===id);if(!p)return;R.cur=id;S=p;store();render();tab(1)}
+function delP(id){if(armed!==id){armed=id;setTimeout(()=>{armed=null;renderHome()},4000);renderHome();return}
+  armed=null;R.del=R.del||{};R.del[id]=Date.now();R.projects=R.projects.filter(p=>p.id!==id);if(R.cur===id){R.cur=null;S=blank("")}save();render();renderHome()}
+function renderHome(){const L=R.projects;
+  $("plist").innerHTML=L.length?L.map(p=>{const tot=p.sessions.reduce((a,s)=>a+s.end-s.start,0)/60000,last=p.sessions.reduce((a,s)=>Math.max(a,s.end),0);
+    return `<div class="task"><div><span class="nm" style="cursor:default">${esc(p.name)}</span>${p.running?'<span class="live"></span>':""}<div class="mt">${p.tasks.length} tasks · logged ${fm(tot)}${last?" · last session "+dStr(last):""}</div></div>
+    <div class="row"><button class="p" data-a="openp" data-id="${p.id}">Continue</button><button class="g" data-a="delp" data-id="${p.id}">${armed===p.id?"Click again to delete":"Delete"}</button></div></div>`}).join(""):'<div class="empty">No projects yet. Create one above.</div>'}
+function tab(n){[0,1,2].forEach(i=>{$("v"+i).classList.toggle("hide",i!==n);$("t"+i).classList.toggle("on",i===n)});if(n===0)renderHome()}
+$("t0").onclick=()=>tab(0);$("t1").onclick=()=>tab(1);$("t2").onclick=()=>tab(2);
+$("newp").onclick=()=>{const p=blank($("pn").value.trim()||"Untitled project");R.projects.push(p);R.cur=p.id;S=p;$("pn").value="";save();render();tab(1);setImp("New project created. Upload its estimate file, or add tasks manually.")};
+
+$("exp").onclick=async()=>{
+  const {out,TE0,TE1,TA}=rows();
+  const sum=[["Milestone / task","Est. min (h)","Est. max (h)","Sessions","Actual (min)","Actual (h)","Status"]];
+  out.forEach(r=>sum.push(r.m?[r.name,r.min,r.max,r.n,+r.act.toFixed(2),+(r.act/60).toFixed(2),r.st]:["    "+r.name,"","",r.n,+r.act.toFixed(2),+(r.act/60).toFixed(2),""]));
+  sum.push(["TOTAL",TE0,TE1,"",+TA.toFixed(2),+(TA/60).toFixed(2),""]);
+  const app=[["#","Milestone","Task","Start date","Start time","End date","End time","Minutes","hh:mm:ss"]];
+  [...S.sessions].sort((a,b)=>a.start-b.start).forEach((s,i)=>{const n=info(s);app.push([i+1,n.m,n.t,dStr(s.start),tStr(s.start),dStr(s.end),tStr(s.end),+((s.end-s.start)/60000).toFixed(2),hms(s.end-s.start)])});
+  const wb=XLSX.utils.book_new(),w1=XLSX.utils.aoa_to_sheet([["Project: "+S.name],["Generated "+dStr(Date.now())+" "+tStr(Date.now())],[],...sum]),w2=XLSX.utils.aoa_to_sheet([["Project: "+S.name],[],...app]);
+  w1["!cols"]=[{wch:48},{wch:12},{wch:12},{wch:9},{wch:12},{wch:10},{wch:20}];w2["!cols"]=[{wch:5},{wch:36},{wch:36},{wch:12},{wch:11},{wch:12},{wch:11},{wch:9}];
+  XLSX.utils.book_append_sheet(wb,w1,"Report");XLSX.utils.book_append_sheet(wb,w2,"Appendix - Timestamps");
+  const data=XLSX.write(wb,{bookType:"xlsx",type:"array"});
+  try{saveFile((S.name.replace(/[^\p{L}\p{N}]+/gu,"-").replace(/^-+|-+$/g,"").toLowerCase()||"project")+"-report-"+dStr(Date.now())+".xlsx",new Blob([data],{type:"application/octet-stream"}))}catch(x){alert("Couldn’t save the file.")}};
+$("reset").onclick=()=>{const b=$("reset"),L="Clear this project’s sessions";if(armR){armR=false;S.sessions=[];S.running=null;save();render();b.textContent=L}else{armR=true;b.textContent="Click again to delete all sessions";setTimeout(()=>{armR=false;b.textContent=L},4000)}};
+$("bk").onclick=()=>{saveFile("bunny-pace-backup-"+dStr(Date.now())+".json",new Blob([JSON.stringify(R)],{type:"application/json"}));$("bkm").textContent="Backup downloaded."};
+$("rsb").onclick=()=>$("rs").click();
+$("rs").onchange=async ev=>{const f=ev.target.files[0];ev.target.value="";if(!f)return;
+  try{const b=norm(JSON.parse(await f.text()));mergeInto(b);save();render();renderHome();$("bkm").textContent="Backup restored and merged."}catch(e){$("bkm").textContent="That doesn’t look like a Bunny Pace backup."}};
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+render();tab(0);
+function mergeInto(b){const del=Object.assign({},R.del||{});Object.entries(b.del||{}).forEach(([k,v])=>{del[k]=Math.max(del[k]||0,v)});
+  const map=new Map(R.projects.map(p=>[p.id,p]));
+  b.projects.forEach(bp=>{const p=map.get(bp.id);if(!p||(bp.at||0)>(p.at||0))map.set(bp.id,bp)});
+  R.projects=[...map.values()].filter(p=>(del[p.id]||0)<=(p.at||p.created||0));R.del=del;
+  if(!R.projects.some(p=>p.id===R.cur))R.cur=null;S=R.projects.find(p=>p.id===R.cur)||blank("")}
+const GK="bp-gcid",FK="bp-gfid",ON="bp-gon";
+let tok=null,tokExp=0,tc=null,fid=null,dTimer=null,syncing=false,dirty=false;
+try{fid=localStorage.getItem(FK)}catch(e){}
+const gid=()=>{try{return localStorage.getItem(GK)||""}catch(e){return""}};
+const gon=()=>{try{return localStorage.getItem(ON)==="1"}catch(e){return false}};
+const gst=t=>{$("gst").textContent=t};
+const loadGsi=()=>new Promise((ok,no)=>{if(window.google&&google.accounts)return ok();const x=document.createElement("script");x.src="https://accounts.google.com/gsi/client";x.onload=ok;x.onerror=no;document.head.appendChild(x)});
+async function connect(silent){const id=gid();if(!id){gst("Paste your Google Client ID first.");return}
+  try{await loadGsi()}catch(e){chip("Drive: offline");return}
+  if(!tc)tc=google.accounts.oauth2.initTokenClient({client_id:id,scope:"https://www.googleapis.com/auth/drive.file",
+    callback:r=>{if(r.error){tok=null;chip(silent?"Drive: tap to reconnect":"Drive: sign-in failed");if(!silent)gst("Sign-in failed ("+r.error+"). Check the setup steps.");return}
+      tok=r.access_token;tokExp=Date.now()+(r.expires_in-60)*1000;try{localStorage.setItem(ON,"1")}catch(e){}gst("Connected.");syncNow()},
+    error_callback:()=>{chip("Drive: tap to reconnect")}});
+  tc.requestAccessToken({prompt:silent?"none":""})}
+async function dv(url,opt){opt=opt||{};const r=await fetch(url,Object.assign({},opt,{headers:Object.assign({Authorization:"Bearer "+tok},opt.headers||{})}));
+  if(r.status===401){tok=null;chip("Drive: tap to reconnect");throw 401}if(!r.ok)throw r.status;return r}
+async function syncNow(){if(!tok||Date.now()>tokExp){if(gon())chip("Drive: tap to reconnect");return}if(syncing)return;syncing=true;chip("Drive: syncing…");
+  try{
+    if(!fid){const q=encodeURIComponent("name='BunnyPace-data.json' and trashed=false");
+      const j=await(await dv("https://www.googleapis.com/drive/v3/files?q="+q+"&spaces=drive&fields=files(id)")).json();if(j.files&&j.files[0])fid=j.files[0].id}
+    let remote=null;
+    if(fid){try{remote=await(await dv("https://www.googleapis.com/drive/v3/files/"+fid+"?alt=media")).json()}catch(e){if(e===404)fid=null;else throw e}}
+    const sig=()=>JSON.stringify(R.projects.map(p=>p.id+":"+(p.at||0)))+JSON.stringify(R.del||{});
+    const before=sig();if(remote)mergeInto(norm(remote));const changed=before!==sig();
+    if(!fid||!remote||dirty||changed){const body=JSON.stringify(R);
+      if(!fid){const bd="bp"+uid(),meta=JSON.stringify({name:"BunnyPace-data.json",mimeType:"application/json"});
+        const mp="--"+bd+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"+meta+"\r\n--"+bd+"\r\nContent-Type: application/json\r\n\r\n"+body+"\r\n--"+bd+"--";
+        const j=await(await dv("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",{method:"POST",headers:{"Content-Type":"multipart/related; boundary="+bd},body:mp})).json();fid=j.id;try{localStorage.setItem(FK,fid)}catch(e){}}
+      else await dv("https://www.googleapis.com/upload/drive/v3/files/"+fid+"?uploadType=media",{method:"PATCH",headers:{"Content-Type":"application/json"},body});
+      dirty=false}
+    store();if(changed){render();renderHome()}chip("Drive: synced ✓")
+  }catch(e){if(tok)chip("Drive error ("+e+")")}finally{syncing=false}}
+function driveSoon(){dirty=true;if(!tok)return;clearTimeout(dTimer);dTimer=setTimeout(syncNow,3000)}
+$("gid").value=gid();
+$("gcon").onclick=()=>{const v=$("gid").value.trim();try{localStorage.setItem(GK,v)}catch(e){}tc=null;connect(false)};
+$("gdis").onclick=()=>{tok=null;tc=null;try{localStorage.removeItem(ON)}catch(e){}chip("Saved on this device");gst("Disconnected. Your file in Drive is untouched.")};
+$("sync").style.cursor="pointer";$("sync").onclick=()=>{if(gid()&&gon()&&(!tok||Date.now()>tokExp))connect(false)};
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)syncNow()});
+setInterval(()=>{if(tok&&Date.now()<tokExp)syncNow()},60000);
+function initSync(){if(gon()&&gid()){chip("Drive: tap to reconnect");connect(true)}else chip("Saved on this device")}
+initSync();
+</script></body></html>
