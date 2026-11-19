@@ -29,7 +29,7 @@ select,input[type=text],input[type=number]{border:1px solid var(--bd);background
 .mt1{font-size:18px}.mr{font-size:15px}.mb{padding:8px 16px 4px}.card.mc{padding:0;margin-bottom:16px}.mc .task{padding:12px 16px}.mc .task.run{margin:0;border-radius:0}.tot{border-radius:12px;margin-bottom:16px}
 .nm{position:relative;cursor:help;display:inline-block}
 .nm[data-scope]:hover::after,.nm[data-scope]:focus::after{content:attr(data-scope);position:absolute;left:0;top:100%;margin-top:4px;z-index:9;width:min(420px,80vw);white-space:normal;background:var(--tx);color:var(--bg);font-weight:400;font-size:13px;line-height:1.4;padding:8px 10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
-.stamp{margin-left:10px;color:var(--mut);font-size:13px;font-variant-numeric:tabular-nums}.task{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--bd)}
+.est{margin-left:10px;font-size:12px;border:1px solid var(--bd);border-radius:99px;padding:1px 8px;color:var(--mut);white-space:nowrap}.stamp{margin-left:10px;color:var(--mut);font-size:13px;font-variant-numeric:tabular-nums}.task{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--bd)}
 .task:first-of-type{border-top:none}
 .task.run{background:color-mix(in srgb,var(--ac) 10%,transparent);margin:0 -10px;padding:10px;border-radius:8px}
 .nm{font-weight:600}.mt{color:var(--mut);font-size:13px}
@@ -145,23 +145,23 @@ function render(){
   const rp=R.projects.find(p=>p.running&&p!==S),rb=$("runb");rb.classList.toggle("hide",!rp);
   if(rp)rb.innerHTML=`Timer is running in <b>${esc(rp.name)}</b> <button class="r" data-a="stop">Stop timer</button> <button data-a="openp" data-id="${rp.id}">Open</button>`;
   const lv=$("live");if(lv)lv.classList.toggle("hide",!anyRun());document.title=anyRun()?"● Bunny Pace":"Bunny Pace";
-  $("list").innerHTML=S.ms.length?S.ms.map(m=>{const x=mTot(m);
+  $("list").innerHTML=(S.ms.length&&S.ms.some(m=>!msTasks(m).length)?'<div class="card"><div class="mt" style="margin-bottom:6px">Some milestones have no tasks (a., b., c.).</div><button data-a="clean">Remove milestones with no tasks</button></div>':"")+(S.ms.length?S.ms.map(m=>{const x=mTot(m);
     return `<div class="card mc"><div class="mh"><div class="mt1">${esc(m.name)}</div><div class="mr">${est(m)}</div></div><div class="mb mt">Logged: <b data-mt="${m.id}">${fm(x)}</b> · <span class="${stCls(m,x)}">${status(m,x)}</span> <button class="g" data-a="delm" data-id="${m.id}" title="Remove milestone">✕</button></div>`+
-    (msTasks(m).map(t=>`<div class="task ${isRun(t)?"run":""}"><div><span class="nm" tabindex="0"${t.scope?` data-scope="${esc(t.scope)}"`:""}>${t.letter?esc(t.letter)+" ":""}${esc(t.name)}</span><span class="stamp" data-t="${t.id}">${stamp(t)}</span></div>
+    (msTasks(m).map(t=>`<div class="task ${isRun(t)?"run":""}"><div><span class="nm" tabindex="0"${t.scope?` data-scope="${esc(t.scope)}"`:""}>${t.letter?esc(t.letter)+" ":""}${esc(t.name)}</span>${t.max!=null?`<span class="est ${tTot(t)/60>t.max?"over":""}">est ${t.min===t.max?t.min:t.min+"–"+t.max} h</span>`:""}<span class="stamp" data-t="${t.id}">${stamp(t)}</span></div>
       <div class="row"><button class="${isRun(t)?"r":"p"}" data-a="${isRun(t)?"stop":"start"}" data-id="${t.id}">${isRun(t)?"Stop":"Start"}</button><button class="g" data-a="del" data-id="${t.id}" title="Remove task">✕</button></div></div>`).join("")||'<div class="empty" style="padding:8px 16px">No tasks in this milestone.</div>')+"</div>"}).join("")+
-    `<div class="mh tot"><div class="mt1">TOTAL</div><div class="mr">${T.e0}–${T.e1} h · logged <span data-tt>${fm(T.t)}</span></div></div>`:'<div class="card empty">No tasks yet. Load a file or add one above.</div>';
+    `<div class="mh tot"><div class="mt1">TOTAL</div><div class="mr">${T.e0}–${T.e1} h · logged <span data-tt>${fm(T.t)}</span></div></div>`:'<div class="card empty">No tasks yet. Load a file or add one above.</div>');
   renderReport();
 }
 function rows(){const out=[];let TE0=0,TE1=0,TA=0;
   S.ms.forEach(m=>{const a=msMin(m);TA+=a;TE0+=m.min||0;TE1+=m.max||0;
     out.push({m:1,name:m.name,min:m.min,max:m.max,n:msTasks(m).reduce((q,t)=>q+S.sessions.filter(s=>s.taskId===t.id).length,0),act:a,st:status(m,a),over:stCls(m,a)});
-    msTasks(m).forEach(t=>out.push({m:0,name:(t.letter?t.letter+" ":"")+t.name,n:S.sessions.filter(s=>s.taskId===t.id).length,act:taskMin(t.id)}))});
+    msTasks(m).forEach(t=>out.push({m:0,min:t.min,max:t.max,name:(t.letter?t.letter+" ":"")+t.name,n:S.sessions.filter(s=>s.taskId===t.id).length,act:taskMin(t.id)}))});
   return {out,TE0,TE1,TA}}
 function renderReport(){
   const {out,TE0,TE1,TA}=rows();
   $("gen").textContent="Generated "+dStr(Date.now())+" "+tStr(Date.now())+(S.running?" · a task is still running (not counted until stopped)":"");
   $("sum").innerHTML="<tr><th>Milestone / task</th><th class=n>Sessions</th><th class=n>Estimate</th><th class=n>Actual (min)</th><th class=n>Actual (h)</th><th>Status</th></tr>"+
-    out.map(r=>`<tr class="${r.m?"ms":"sub2"}"><td>${esc(r.name)}</td><td class=n>${r.n}</td><td class=n>${r.m?est(r):""}</td><td class=n>${r.act.toFixed(1)}</td><td class=n>${(r.act/60).toFixed(1)}</td><td class="${r.over}">${r.m?r.st:""}</td></tr>`).join("")+
+    out.map(r=>`<tr class="${r.m?"ms":"sub2"}"><td>${esc(r.name)}</td><td class=n>${r.n}</td><td class=n>${(r.m||r.max!=null)?est(r):""}</td><td class=n>${r.act.toFixed(1)}</td><td class=n>${(r.act/60).toFixed(1)}</td><td class="${r.over}">${r.m?r.st:""}</td></tr>`).join("")+
     `<tr><th>Total</th><th></th><th class=n>${TE0}–${TE1} h</th><th class=n>${TA.toFixed(1)}</th><th class=n>${(TA/60).toFixed(1)}</th><th></th></tr>`;
   const ss=[...S.sessions].sort((a,b)=>a.start-b.start);
   $("app").innerHTML="<tr><th>#</th><th>Milestone</th><th>Task</th><th>Start date</th><th>Start time</th><th>End date</th><th>End time</th><th class=n>Minutes</th><th>hh:mm:ss</th><th></th></tr>"+
@@ -172,7 +172,7 @@ function info(s){const t=S.tasks.find(t=>t.id===s.taskId);if(!t)return{m:"(remov
 setInterval(()=>{if(S.running)upd()},1000);
 
 document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,id=b.dataset.id;
-  if(a==="openp"){openP(id);return}if(a==="delp"){delP(id);return}
+  if(a==="clean"){S.ms=S.ms.filter(m=>msTasks(m).length);save();render();return}if(a==="openp"){openP(id);return}if(a==="delp"){delP(id);return}
   if(a==="start")start(id);else if(a==="stop")stop();
   else if(a==="del"){if(confirm("Remove this task?")){if(S.running&&S.running.taskId===id)S.running=null;S.tasks=S.tasks.filter(t=>t.id!==id);save();render()}}
   else if(a==="delm"){if(confirm("Remove this milestone and its tasks?")){const ids=S.tasks.filter(t=>t.mid===id).map(t=>t.id);if(S.running&&ids.includes(S.running.taskId))S.running=null;S.tasks=S.tasks.filter(t=>t.mid!==id);S.ms=S.ms.filter(m=>m.id!==id);save();render()}}
@@ -197,37 +197,38 @@ const PLAN=[
 ["i.","First-batch quality control","Review up to five draft posts and provide one consolidated round of feedback on the copy and visuals."],
 ["k.","Project alignment, revisions and handover","Confirm the scope at kickoff, apply one consolidated round of feedback to the strategy and guidelines, and hand over the final materials."]]]];
 function seedPlan(){const ms=[],tasks=[];PLAN.forEach(p=>{const m={name:p[0],min:p[1],max:p[2]};ms.push(m);p[3].forEach(t=>tasks.push({ms:m,letter:t[0],name:t[1],scope:t[2]}))});return{ms,tasks}}
-function applyPlan(ms,tasks){const oldT=S.tasks,oldM=S.ms;
+function applyPlan(ms,tasks){ms=ms.filter(m=>tasks.some(t=>t.ms===m));const oldT=S.tasks,oldM=S.ms;
   ms.forEach(m=>{const o=oldM.find(x=>x.name===m.name);m.id=o?o.id:uid()});
   S.ms=ms.map(m=>({id:m.id,name:m.name,min:m.min,max:m.max}));
-  S.tasks=tasks.map(t=>{const o=oldT.find(x=>x.mid===t.ms.id&&x.name===t.name);return{id:o?o.id:uid(),mid:t.ms.id,letter:t.letter,name:t.name,scope:t.scope||""}});
+  S.tasks=tasks.map(t=>{const o=oldT.find(x=>x.mid===t.ms.id&&x.name===t.name);return{id:o?o.id:uid(),mid:t.ms.id,letter:t.letter,name:t.name,scope:t.scope||"",min:t.min==null?null:t.min,max:t.max==null?null:t.max}});
   if(S.running&&!S.tasks.some(t=>t.id===S.running.taskId))S.running=null}
 const RNG=/^(\d+(?:[.,]\d+)?)\s*(?:[-–—]|to)\s*(\d+(?:[.,]\d+)?)$/i, NUM=/^\d+(?:[.,]\d+)?$/, LET=/^\(?[a-z]\)?[.)]?$/i;
 const f=x=>parseFloat(x.replace(",","."));
+const hrsOf=(c,from)=>{for(let i=from;i<c.length;i++){const x=c[i];if(!x||x.includes("$"))continue;const m=x.match(RNG);if(m)return[f(m[1]),f(m[2])];if(NUM.test(x))return[f(x),f(x)]}return null};
 function parse(data){const ms=[],tasks=[];let cur=null;
   data.forEach(r=>{const c=r.map(x=>String(x).trim());const i0=c.findIndex(x=>x);if(i0<0)return;
     if(/estimated\s*hours/i.test(c.join(" ")))return;
     const first=c[i0];
     if(LET.test(first)){const j=c.findIndex((x,i)=>i>i0&&x);if(j<0)return;
       if(!cur){cur={name:"Ungrouped",min:null,max:null};ms.push(cur)}
-      tasks.push({ms:cur,letter:first.replace(/[()]/g,"").replace(/[.)]?$/,".").toLowerCase(),name:c[j],scope:c.slice(j+1).find(x=>x&&!RNG.test(x)&&!NUM.test(x)&&!x.includes("$"))||""});return}
+      tasks.push({ms:cur,letter:first.replace(/[()]/g,"").replace(/[.)]?$/,".").toLowerCase(),name:c[j],min:(h=>h?h[0]:null)(hrsOf(c,j+1)),max:(h=>h?h[1]:null)(hrsOf(c,j+1)),scope:c.slice(j+1).find(x=>x&&!RNG.test(x)&&!NUM.test(x)&&!x.includes("$"))||""});return}
     let h=null;for(let i=i0+1;i<c.length;i++){const x=c[i];if(!x||x.includes("$"))continue;
       let m=x.match(RNG);if(m){h=[f(m[1]),f(m[2])];break}if(NUM.test(x)){h=[f(x),f(x)];break}}
     if(h){cur={name:first.replace(/\*+$/,"").trim(),min:Math.min(...h),max:Math.max(...h)};ms.push(cur)}});
   return {ms,tasks}}
 let pending=null;
 const setImp=t=>{$("imp").textContent=t};
-const PROMPT=`You are reading a freelancer's project estimate (a table). Return ONLY JSON, no prose or code fences: {"milestones":[{"name":string,"min":number|null,"max":number|null,"tasks":[{"letter":"a.","name":string,"scope":string}]}]}. A milestone is a highlighted group heading row that has its own estimated hours (8-16 means min 8, max 16; a single number means min=max). Tasks are the lettered rows (a., b., c. ...) under it: name = the short title, scope = the description text. Ignore fee or price columns, hours of individual tasks, header rows and TOTAL rows. Keep the original order and wording.`;
+const PROMPT=`You are reading a freelancer's project estimate (a table). Return ONLY JSON, no prose or code fences: {"milestones":[{"name":string,"min":number|null,"max":number|null,"tasks":[{"letter":"a.","name":string,"scope":string,"min":number|null,"max":number|null}]}]}. A milestone is a highlighted group heading row that has its own estimated hours (8-16 means min 8, max 16; a single number means min=max). Tasks are the lettered rows (a., b., c. ...) under it: name = the short title, scope = the description text. Each task also has its own estimated hours range (min, max). Ignore fee or price columns, header rows and TOTAL rows. Only include milestones that have lettered tasks under them. Keep the original order and wording.`;
 function toPlan(j){const ms=[],tasks=[];((j&&j.milestones)||[]).forEach(m=>{const nm=String(m.name||"").replace(/\*+$/,"").trim();if(!nm)return;
   const mn=m.min==null?null:+m.min,mx=m.max==null?mn:+m.max;const mm={name:nm,min:mn,max:mx};ms.push(mm);
-  (m.tasks||[]).forEach(t=>{if(t&&t.name)tasks.push({ms:mm,letter:String(t.letter||"").trim().replace(/[.)]?$/,"."),name:String(t.name).trim(),scope:String(t.scope||"").trim()})})});
+  (m.tasks||[]).forEach(t=>{if(t&&t.name)tasks.push({ms:mm,letter:String(t.letter||"").trim().replace(/[.)]?$/,"."),name:String(t.name).trim(),scope:String(t.scope||"").trim(),min:t.min==null?null:+t.min,max:t.max==null?(t.min==null?null:+t.min):+t.max})})});
   return{ms,tasks}}
 async function ai(text,imgs){throw{code:"noai"};
   if(imgs){const l=await sm.limits();if(!l.images)throw{code:"noimg"}}
   return await sm.json(text,imgs?{images:imgs}:{})}
 function showPreview(p){if(!p.tasks.length){setImp("Couldn’t find any lettered tasks (a., b., c.) in that file.");return}
-  pending=p;setImp("");
-  $("prev").innerHTML='<div class="mt" style="margin:10px 0 4px">Check what was found:</div>'+p.ms.map(m=>`<div style="margin:6px 0"><b>${esc(m.name)}</b> <span class="mt">${est(m)}</span><div class="mt">${p.tasks.filter(t=>t.ms===m).map(t=>esc(t.letter+" "+t.name)).join(" · ")||"no tasks"}</div></div>`).join("")+'<div class="row" style="margin-top:8px"><button class="p" id="useit">Use this list</button><button id="nope">Cancel</button></div>';
+  pending=p;setImp("");const sk=p.ms.filter(m=>!p.tasks.some(t=>t.ms===m));
+  $("prev").innerHTML='<div class="mt" style="margin:10px 0 4px">Check what was found:</div>'+p.ms.filter(m=>p.tasks.some(t=>t.ms===m)).map(m=>`<div style="margin:6px 0"><b>${esc(m.name)}</b> <span class="mt">${est(m)}</span><div class="mt">${p.tasks.filter(t=>t.ms===m).map(t=>esc(t.letter+" "+t.name+(t.max!=null?" ("+(t.min===t.max?t.min:t.min+"–"+t.max)+" h)":""))).join(" · ")||"no tasks"}</div></div>`).join("")+(sk.length?'<div class="mt" style="margin-top:8px">Skipped (no a., b., c. tasks under them): '+sk.map(m=>esc(m.name)).join("; ")+'</div>':"")+'<div class="row" style="margin-top:8px"><button class="p" id="useit">Use this list</button><button id="nope">Cancel</button></div>';
   $("useit").onclick=()=>{applyPlan(pending.ms,pending.tasks);pending=null;$("prev").innerHTML="";save();render();setImp("Loaded.")};
   $("nope").onclick=()=>{pending=null;$("prev").innerHTML=""}}
 $("file").onchange=async ev=>{const fl=ev.target.files[0];ev.target.value="";if(!fl)return;$("prev").innerHTML="";
@@ -258,7 +259,7 @@ $("newp").onclick=()=>{const p=blank($("pn").value.trim()||"Untitled project");R
 $("exp").onclick=async()=>{
   const {out,TE0,TE1,TA}=rows();
   const sum=[["Milestone / task","Est. min (h)","Est. max (h)","Sessions","Actual (min)","Actual (h)","Status"]];
-  out.forEach(r=>sum.push(r.m?[r.name,r.min,r.max,r.n,+r.act.toFixed(2),+(r.act/60).toFixed(2),r.st]:["    "+r.name,"","",r.n,+r.act.toFixed(2),+(r.act/60).toFixed(2),""]));
+  out.forEach(r=>sum.push(r.m?[r.name,r.min,r.max,r.n,+r.act.toFixed(2),+(r.act/60).toFixed(2),r.st]:["    "+r.name,r.min==null?"":r.min,r.max==null?"":r.max,r.n,+r.act.toFixed(2),+(r.act/60).toFixed(2),""]));
   sum.push(["TOTAL",TE0,TE1,"",+TA.toFixed(2),+(TA/60).toFixed(2),""]);
   const app=[["#","Milestone","Task","Start date","Start time","End date","End time","Minutes","hh:mm:ss"]];
   [...S.sessions].sort((a,b)=>a.start-b.start).forEach((s,i)=>{const n=info(s);app.push([i+1,n.m,n.t,dStr(s.start),tStr(s.start),dStr(s.end),tStr(s.end),+((s.end-s.start)/60000).toFixed(2),hms(s.end-s.start)])});
