@@ -78,7 +78,7 @@ th{color:var(--mut);font-weight:600}td.n,th.n{text-align:right;font-variant-nume
     <p class="mt">Upload your estimate as Excel, CSV, Word (.docx), PDF, or a screenshot/photo. Word, PDF and images are read right in your browser (images use text recognition, so check the preview carefully). Bunny Pace picks out the milestones (with their hour ranges) and only the lettered tasks (a., b., c.), then shows you the result to confirm before loading. Recorded sessions of tasks with the same name are kept. This only affects the project you have open.</p><div class="mt" id="imp"></div><div id="prev"></div>
     <details><summary class="mt" style="cursor:pointer">Or add manually</summary>
     <div class="row" style="margin:8px 0"><input type="text" id="mn" placeholder="Milestone" style="flex:1;min-width:140px"><input type="number" id="m1" placeholder="Min h" style="width:80px"><input type="number" id="m2" placeholder="Max h" style="width:80px"><button id="addm">Add milestone</button></div>
-    <div class="row"><select id="ms"></select><input type="text" id="nn" placeholder="Task name" style="flex:1;min-width:140px"><button id="add">Add task</button></div></details>
+    <div class="row"><select id="ms"></select><input type="text" id="nn" placeholder="Task name" style="flex:1;min-width:140px"><input type="text" id="ne" placeholder="Estimate, e.g. 4-6" style="width:140px"><button id="add">Add task</button></div></details>
   </div>
   <div id="list"></div>
 </section>
@@ -110,7 +110,7 @@ function norm(o){if(!o||typeof o!=="object")o={};
   if(!o.projects.some(p=>p.id===o.cur))o.cur=null;return o}
 let R=norm((()=>{try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}})());
 let S=R.projects.find(p=>p.id===R.cur)||blank("");
-let ref=null,pushT=null,armed=null,armR=false;
+let ref=null,pushT=null,armed=null,armR=false,editing=null;
 const chip=t=>{const e=document.getElementById("sync");if(e)e.textContent=t};
 const store=()=>{try{localStorage.setItem(KEY,JSON.stringify(R))}catch(e){}};
 const push=()=>{if(!ref)return;clearTimeout(pushT);pushT=setTimeout(()=>{ref.set({json:JSON.stringify(R),at:R.at}).then(()=>chip("Synced ✓")).catch(()=>chip("Sync error"))},500)};
@@ -126,7 +126,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 const taskMin=id=>S.sessions.filter(s=>s.taskId===id).reduce((a,s)=>a+(s.end-s.start),0)/60000;
 const msTasks=m=>S.tasks.filter(t=>t.mid===m.id);
 const msMin=m=>msTasks(m).reduce((a,t)=>a+taskMin(t.id),0);
-const est=m=>m.max==null?"–":(m.min===m.max?m.min:m.min+"–"+m.max)+" h";
+const est=m=>m.max==null?"–":(m.min===m.max?m.min:m.min+"–"+m.max)+" h"+(m.ed?"*":"");
 const status=(m,min)=>{if(m.max==null)return"–";const h=min/60;
   if(h<m.min)return"Under by "+(m.min-h).toFixed(1)+" h";if(h>m.max)return"Over by "+(h-m.max).toFixed(1)+" h";return"Within estimate"};
 const stCls=(m,min)=>m.max!=null&&min/60>m.max?"over":"";
@@ -137,6 +137,15 @@ function start(id){const o=R.projects.find(p=>p.running);if(o){const r=o.running
   S.running={taskId:id,start:Date.now()};save();render()}
 function stop(){const p=R.projects.find(q=>q.running);if(p)stopP(p)}
 
+const estVal=t=>t.max==null?"":(t.min===t.max?String(t.min):t.min+"-"+t.max);
+const editor=t=>`<div class="row" style="margin-top:6px"><input type="text" id="ei" value="${estVal(t)}" placeholder="e.g. 4-6" style="width:110px"><span class="mt">hours</span><button class="p" data-a="esave" data-id="${t.id}">Save</button><button class="g" data-a="ecancel">Cancel</button>${t.ed&&t.o&&t.o.max!=null?`<button class="g" data-a="erev" data-id="${t.id}">Restore file value ${rng(t.o)} h</button>`:""}</div>`;
+function parseEst(v){v=String(v).trim().replace(/\s*h(ours?)?$/i,"").trim();if(!v)return{min:null,max:null};
+  const m=v.match(RNG);if(m){const a=f(m[1]),b=f(m[2]);return{min:Math.min(a,b),max:Math.max(a,b)}}
+  if(NUM.test(v)){const x=f(v);return{min:x,max:x}}return null}
+function saveEst(id){const t=S.tasks.find(x=>x.id===id),i=document.getElementById("ei");if(!t||!i)return;const r=parseEst(i.value);
+  if(!r){i.style.borderColor="#DB6654";return}
+  if(t.man)t.ed=true;else{if(!t.o)t.o={min:t.min==null?null:t.min,max:t.max==null?null:t.max};t.ed=!(r.min===t.o.min&&r.max===t.o.max)}
+  t.min=r.min;t.max=r.max;editing=null;save();render()}
 const fm=m=>Math.floor(m/60)+"h "+pad(Math.floor(m%60))+"m";
 const liveMs=()=>S.running?Date.now()-S.running.start:0;
 const isRun=t=>S.running&&S.running.taskId===t.id;
@@ -145,14 +154,15 @@ const mTot=m=>msMin(m)+(S.running&&msTasks(m).some(isRun)?liveMs()/60000:0);
 const stamp=t=>{const x=tTot(t);return isRun(t)?"● since "+tStr(S.running.start).slice(0,5)+" · total "+fm(x):(x>0?"Total "+fm(x):"")};
 const sums=()=>({e0:S.ms.reduce((a,m)=>a+(m.min||0),0),e1:S.ms.reduce((a,m)=>a+(m.max||0),0),t:S.ms.reduce((a,m)=>a+mTot(m),0)});
 const pct=t=>t.max?tTot(t)/60/t.max*100:0;
-const zone=p=>p<70?"z1":p<=100?"z2":"z3";
+const ys=t=>t&&t.min!=null&&t.max>t.min?(t.min+t.max)/2/t.max*100:70;
+const zone=(p,t)=>p<ys(t)?"z1":p<=100?"z2":"z3";
 const rng=t=>t.min===t.max?t.min:t.min+"–"+t.max;
 const geo=p=>p<=100?{fw:p,ol:0,ow:0,rp:p}:{fw:10000/p,ol:10000/p,ow:100-10000/p,rp:100};
-const pcls=p=>"pace "+zone(p)+(p>100?" ov":"");
+const pcls=(p,t)=>"pace "+zone(p,t)+(p>100?" ov":"");
 function pace(t){const p=pct(t),g=geo(p);
-  return `<div class="${pcls(p)}" data-p="${t.id}" data-tip="Estimate: ${rng(t)} h">${isRun(t)?`<div class="bun" style="left:${g.rp}%;transform:translateX(-${g.rp}%)"></div>`:""}<div class="trk"><div class="fil" style="width:${g.fw}%"></div><div class="ovr" style="left:${g.ol}%;width:${g.ow}%"><i class="ovf"></i></div></div></div>`}
+  return `<div class="${pcls(p,t)}" data-p="${t.id}" data-tip="Estimate: ${rng(t)} h${t.ed?"*":""}${t.ed&&t.o&&t.o.max!=null?" (file: "+rng(t.o)+" h)":""}">${isRun(t)?`<div class="bun" style="left:${g.rp}%;transform:translateX(-${g.rp}%)"></div>`:""}<div class="trk"><div class="fil" style="width:${g.fw}%"></div><div class="ovr" style="left:${g.ol}%;width:${g.ow}%"><i class="ovf"></i></div></div></div>`}
 function paceUpd(){const t=S.tasks.find(isRun);if(!t||!t.max)return;const e=document.querySelector('[data-p="'+t.id+'"]');if(!e)return;
-  const p=pct(t),g=geo(p);e.className=pcls(p);e.querySelector(".fil").style.width=g.fw+"%";
+  const p=pct(t),g=geo(p);e.className=pcls(p,t);e.querySelector(".fil").style.width=g.fw+"%";
   const o=e.querySelector(".ovr");o.style.left=g.ol+"%";o.style.width=g.ow+"%";
   const b=e.querySelector(".bun");if(b){b.style.left=g.rp+"%";b.style.transform="translateX(-"+g.rp+"%)"}}
 function upd(){paceUpd();S.tasks.forEach(t=>{const e=document.querySelector(`[data-t="${t.id}"]`);if(e)e.textContent=stamp(t)});
@@ -167,19 +177,19 @@ function render(){
   const lv=$("live");if(lv)lv.classList.toggle("hide",!anyRun());document.title=anyRun()?"● Bunny Pace":"Bunny Pace";
   $("list").innerHTML=(S.ms.length&&S.ms.some(m=>!msTasks(m).length)?'<div class="card"><div class="mt" style="margin-bottom:6px">Some milestones have no tasks (a., b., c.).</div><button data-a="clean">Remove milestones with no tasks</button></div>':"")+(S.ms.length?S.ms.map(m=>{const x=mTot(m);
     return `<div class="card mc"><div class="mh"><div class="mt1">${esc(m.name)}</div><div class="mr">${est(m)}</div></div><div class="mb mt">Logged: <b data-mt="${m.id}">${fm(x)}</b> · <span class="${stCls(m,x)}">${status(m,x)}</span> <button class="g" data-a="delm" data-id="${m.id}" title="Remove milestone">✕</button></div>`+
-    (msTasks(m).map(t=>`<div class="task ${isRun(t)?"run":""}"><div><span class="nm" tabindex="0"${t.scope?` data-scope="${esc(t.scope)}"`:""}>${t.letter?esc(t.letter)+" ":""}${esc(t.name)}</span><span class="stamp" data-t="${t.id}">${stamp(t)}</span>${t.max&&(isRun(t)||taskMin(t.id)>0)?pace(t):""}</div>
-      <div class="row"><button class="${isRun(t)?"r":"p"}" data-a="${isRun(t)?"stop":"start"}" data-id="${t.id}">${isRun(t)?"Stop":"Start"}</button><button class="g" data-a="del" data-id="${t.id}" title="Remove task">✕</button></div></div>`).join("")||'<div class="empty" style="padding:8px 16px">No tasks in this milestone.</div>')+"</div>"}).join("")+
+    (msTasks(m).map(t=>`<div class="task ${isRun(t)?"run":""}"><div><span class="nm" tabindex="0"${t.scope?` data-scope="${esc(t.scope)}"`:""}>${t.letter?esc(t.letter)+" ":""}${esc(t.name)}</span><span class="stamp" data-t="${t.id}">${stamp(t)}</span>${t.max&&(isRun(t)||taskMin(t.id)>0)?pace(t):""}${editing===t.id?editor(t):""}</div>
+      <div class="row"><button class="${isRun(t)?"r":"p"}" data-a="${isRun(t)?"stop":"start"}" data-id="${t.id}">${isRun(t)?"Stop":"Start"}</button><button class="g" data-a="edit" data-id="${t.id}" title="Edit estimate">✎</button><button class="g" data-a="del" data-id="${t.id}" title="Remove task">✕</button></div></div>`).join("")||'<div class="empty" style="padding:8px 16px">No tasks in this milestone.</div>')+"</div>"}).join("")+
     `<div class="mh tot"><div class="mt1">TOTAL</div><div class="mr">${T.e0}–${T.e1} h · logged <span data-tt>${fm(T.t)}</span></div></div>`:'<div class="card empty">No tasks yet. Load a file or add one above.</div>');
   renderReport();
 }
 function rows(){const out=[];let TE0=0,TE1=0,TA=0;
   S.ms.forEach(m=>{const a=msMin(m);TA+=a;TE0+=m.min||0;TE1+=m.max||0;
     out.push({m:1,name:m.name,min:m.min,max:m.max,n:msTasks(m).reduce((q,t)=>q+S.sessions.filter(s=>s.taskId===t.id).length,0),act:a,st:status(m,a),over:stCls(m,a)});
-    msTasks(m).forEach(t=>out.push({m:0,min:t.min,max:t.max,name:(t.letter?t.letter+" ":"")+t.name,n:S.sessions.filter(s=>s.taskId===t.id).length,act:taskMin(t.id)}))});
+    msTasks(m).forEach(t=>out.push({m:0,min:t.min,max:t.max,ed:t.ed,name:(t.letter?t.letter+" ":"")+t.name,n:S.sessions.filter(s=>s.taskId===t.id).length,act:taskMin(t.id)}))});
   return {out,TE0,TE1,TA}}
 function renderReport(){
   const {out,TE0,TE1,TA}=rows();
-  $("gen").textContent="Generated "+dStr(Date.now())+" "+tStr(Date.now())+(S.running?" · a task is still running (not counted until stopped)":"");
+  $("gen").textContent="Generated "+dStr(Date.now())+" "+tStr(Date.now())+(S.running?" · a task is still running (not counted until stopped)":"")+(S.tasks.some(t=>t.ed&&t.max!=null)?" · * estimate edited manually":"");
   $("sum").innerHTML="<tr><th>Milestone / task</th><th class=n>Sessions</th><th class=n>Estimate</th><th class=n>Actual (min)</th><th class=n>Actual (h)</th><th>Status</th></tr>"+
     out.map(r=>`<tr class="${r.m?"ms":"sub2"}"><td>${esc(r.name)}</td><td class=n>${r.n}</td><td class=n>${(r.m||r.max!=null)?est(r):""}</td><td class=n>${r.act.toFixed(1)}</td><td class=n>${(r.act/60).toFixed(1)}</td><td class="${r.over}">${r.m?r.st:""}</td></tr>`).join("")+
     `<tr><th>Total</th><th></th><th class=n>${TE0}–${TE1} h</th><th class=n>${TA.toFixed(1)}</th><th class=n>${(TA/60).toFixed(1)}</th><th></th></tr>`;
@@ -192,6 +202,10 @@ function info(s){const t=S.tasks.find(t=>t.id===s.taskId);if(!t)return{m:"(remov
 setInterval(()=>{if(S.running)upd()},1000);
 
 document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,id=b.dataset.id;
+  if(a==="edit"){editing=id;render();const i=document.getElementById("ei");if(i){i.focus();i.select()}return}
+  if(a==="ecancel"){editing=null;render();return}
+  if(a==="esave"){saveEst(id);return}
+  if(a==="erev"){const t=S.tasks.find(x=>x.id===id);if(t&&t.o){t.min=t.o.min;t.max=t.o.max;t.ed=false}editing=null;save();render();return}
   if(a==="clean"){S.ms=S.ms.filter(m=>msTasks(m).length);save();render();return}if(a==="openp"){openP(id);return}if(a==="delp"){delP(id);return}
   if(a==="start")start(id);else if(a==="stop")stop();
   else if(a==="del"){if(confirm("Remove this task?")){if(S.running&&S.running.taskId===id)S.running=null;S.tasks=S.tasks.filter(t=>t.id!==id);save();render()}}
@@ -200,7 +214,8 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b
 
 $("addm").onclick=()=>{const n=$("mn").value.trim();if(!n)return;const a=parseFloat($("m1").value),b=parseFloat($("m2").value);
   S.ms.push({id:uid(),name:n,min:isNaN(a)?null:a,max:isNaN(b)?(isNaN(a)?null:a):b});$("mn").value=$("m1").value=$("m2").value="";save();render()};
-$("add").onclick=()=>{const n=$("nn").value.trim(),m=$("ms").value;if(!n||!m)return;S.tasks.push({id:uid(),mid:m,letter:"",name:n});$("nn").value="";save();render()};
+document.addEventListener("keydown",e=>{if(e.target&&e.target.id==="ei"){if(e.key==="Enter")saveEst(editing);else if(e.key==="Escape"){editing=null;render()}}});
+$("add").onclick=()=>{const n=$("nn").value.trim(),m=$("ms").value;if(!n||!m)return;const r=parseEst($("ne").value);if(r===null){$("ne").style.borderColor="#DB6654";return}$("ne").style.borderColor="";S.tasks.push({id:uid(),mid:m,letter:"",name:n,min:r.min,max:r.max,ed:true,man:true});$("nn").value="";$("ne").value="";save();render()};
 
 const PLAN=[
 ["Optional Preparation (Recommended): Vietnamese Brand Localisation",8,16,[
@@ -220,7 +235,7 @@ function seedPlan(){const ms=[],tasks=[];PLAN.forEach(p=>{const m={name:p[0],min
 function applyPlan(ms,tasks){ms=ms.filter(m=>tasks.some(t=>t.ms===m));const oldT=S.tasks,oldM=S.ms;
   ms.forEach(m=>{const o=oldM.find(x=>x.name===m.name);m.id=o?o.id:uid()});
   S.ms=ms.map(m=>({id:m.id,name:m.name,min:m.min,max:m.max}));
-  S.tasks=tasks.map(t=>{const o=oldT.find(x=>x.mid===t.ms.id&&x.name===t.name);return{id:o?o.id:uid(),mid:t.ms.id,letter:t.letter,name:t.name,scope:t.scope||"",min:t.min==null?null:t.min,max:t.max==null?null:t.max}});
+  S.tasks=tasks.map(t=>{const o=oldT.find(x=>x.mid===t.ms.id&&x.name===t.name);const h=o&&o.ed,fmin=t.min==null?null:t.min,fmax=t.max==null?null:t.max;return{id:o?o.id:uid(),mid:t.ms.id,letter:t.letter,name:t.name,scope:t.scope||"",min:h?o.min:fmin,max:h?o.max:fmax,ed:h?true:undefined,man:h?o.man:undefined,o:h&&!o.man?{min:fmin,max:fmax}:undefined}});
   if(S.running&&!S.tasks.some(t=>t.id===S.running.taskId))S.running=null}
 const RNG=/^(\d+(?:[.,]\d+)?)\s*(?:[-–—−~]|to)\s*(\d+(?:[.,]\d+)?)$/i, NUM=/^\d+(?:[.,]\d+)?$/, LET=/^\(?[a-z]\)?[.)]?$/i;
 const f=x=>parseFloat(x.replace(",","."));
@@ -310,7 +325,7 @@ $("newp").onclick=()=>{const p=blank($("pn").value.trim()||"Untitled project");R
 $("exp").onclick=async()=>{
   const {out,TE0,TE1,TA}=rows();
   const sum=[["Milestone / task","Est. min (h)","Est. max (h)","Sessions","Actual (min)","Actual (h)","Status"]];
-  out.forEach(r=>sum.push(r.m?[r.name,r.min,r.max,r.n,+r.act.toFixed(2),+(r.act/60).toFixed(2),r.st]:["    "+r.name,r.min==null?"":r.min,r.max==null?"":r.max,r.n,+r.act.toFixed(2),+(r.act/60).toFixed(2),""]));
+  out.forEach(r=>sum.push(r.m?[r.name,r.min,r.max,r.n,+r.act.toFixed(2),+(r.act/60).toFixed(2),r.st]:["    "+r.name,r.min==null?"":r.min,r.max==null?"":r.max,r.n,+r.act.toFixed(2),+(r.act/60).toFixed(2),r.ed&&r.max!=null?"* estimate edited manually":""]));
   sum.push(["TOTAL",TE0,TE1,"",+TA.toFixed(2),+(TA/60).toFixed(2),""]);
   const app=[["#","Milestone","Task","Start date","Start time","End date","End time","Minutes","hh:mm:ss"]];
   [...S.sessions].sort((a,b)=>a.start-b.start).forEach((s,i)=>{const n=info(s);app.push([i+1,n.m,n.t,dStr(s.start),tStr(s.start),dStr(s.end),tStr(s.end),+((s.end-s.start)/60000).toFixed(2),hms(s.end-s.start)])});
